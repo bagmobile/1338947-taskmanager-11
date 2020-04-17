@@ -1,70 +1,27 @@
-import {DAYS, MONTH_NAMES} from "../const.js";
-import {formatTime} from "../utils.js";
+import {COLORS, DAYS, MONTH_NAMES} from "../const.js";
+import {createElement, formatTime} from "../utils.js";
 
-const createColorsMarkup = () => {
-  return (
-    `<input
-      type="radio"
-      id="color-black-4"
-      class="card__color-input card__color-input--black visually-hidden"
-      name="color"
-      value="black"
-    />
-    <label
-      for="color-black-4"
-      class="card__color card__color--black"
-      >black</label
-    >
-    <input
-      type="radio"
-      id="color-yellow-4"
-      class="card__color-input card__color-input--yellow visually-hidden"
-      name="color"
-      value="yellow"
-      checked
-    />
-    <label
-      for="color-yellow-4"
-      class="card__color card__color--yellow"
-      >yellow</label
-    >
-    <input
-      type="radio"
-      id="color-blue-4"
-      class="card__color-input card__color-input--blue visually-hidden"
-      name="color"
-      value="blue"
-    />
-    <label
-      for="color-blue-4"
-      class="card__color card__color--blue"
-      >blue</label
-    >
-    <input
-      type="radio"
-      id="color-green-4"
-      class="card__color-input card__color-input--green visually-hidden"
-      name="color"
-      value="green"
-    />
-    <label
-      for="color-green-4"
-      class="card__color card__color--green"
-      >green</label
-    >
-    <input
-      type="radio"
-      id="color-pink-4"
-      class="card__color-input card__color-input--pink visually-hidden"
-      name="color"
-      value="pink"
-    />
-    <label
-      for="color-pink-4"
-      class="card__color card__color--pink"
-      >pink</label
-    >`
-  );
+
+const createColorsMarkup = (colors, currentColor) => {
+  return colors
+    .map((color, index) => {
+      return (
+        `<input
+          type="radio"
+          id="color-${color}-${index}"
+          class="card__color-input card__color-input--${color} visually-hidden"
+          name="color"
+          value="${color}"
+          ${currentColor === color ? `checked` : ``}
+        />
+        <label
+          for="color-${color}--${index}"
+          class="card__color card__color--${color}"
+          >${color}</label
+        >`
+      );
+    })
+    .join(`\n`);
 };
 
 const createRepeatingDaysMarkup = (days, repeatingDays) => {
@@ -88,8 +45,7 @@ const createRepeatingDaysMarkup = (days, repeatingDays) => {
     .join(`\n`);
 };
 
-
-export const createTaskEditTemplate = (task) => {
+const createTaskEditTemplate = (task) => {
   const {description, dueDate, color, repeatingDays} = task;
 
   const isExpired = dueDate instanceof Date && dueDate < Date.now();
@@ -102,7 +58,7 @@ export const createTaskEditTemplate = (task) => {
   const repeatClass = isRepeatingTask ? `card--repeat` : ``;
   const deadlineClass = isExpired ? `card--deadline` : ``;
 
-  const colorsMarkup = createColorsMarkup();
+  const colorsMarkup = createColorsMarkup(COLORS, color);
   const repeatingDaysMarkup = createRepeatingDaysMarkup(DAYS, repeatingDays);
 
   return (
@@ -114,7 +70,6 @@ export const createTaskEditTemplate = (task) => {
               <use xlink:href="#wave"></use>
             </svg>
           </div>
-
           <div class="card__textarea-wrap">
             <label>
               <textarea
@@ -124,52 +79,40 @@ export const createTaskEditTemplate = (task) => {
               >${description}</textarea>
             </label>
           </div>
-
           <div class="card__settings">
             <div class="card__details">
               <div class="card__dates">
                 <button class="card__date-deadline-toggle" type="button">
                   date: <span class="card__date-status">${isDateShowing ? `yes` : `no`}</span>
                 </button>
-
-                ${isDateShowing ?
-      `<fieldset class="card__date-deadline">
-                      <label class="card__input-deadline-wrap">
-                        <input
-                          class="card__date"
-                          type="text"
-                          placeholder=""
-                          name="date"
-                          value="${date} ${time}"
-                        />
-                      </label>
-                    </fieldset>`
-      : ``
-    }
-
+                ${isDateShowing ? `<fieldset class="card__date-deadline">
+                    <label class="card__input-deadline-wrap">
+                      <input
+                        class="card__date"
+                        type="text"
+                        placeholder=""
+                        name="date"
+                        value="${date} ${time}"
+                      />
+                    </label>
+                </fieldset>` : ``}
                 <button class="card__repeat-toggle" type="button">
                   repeat:<span class="card__repeat-status">${isRepeatingTask ? `yes` : `no`}</span>
                 </button>
-
-                  ${isRepeatingTask ?
-      `<fieldset class="card__repeat-days">
-                      <div class="card__repeat-days-inner">
-                        ${repeatingDaysMarkup}
-                      </div>
-                    </fieldset>`
-      : ``
-    }
+                ${isRepeatingTask ? `<fieldset class="card__repeat-days">
+                    <div class="card__repeat-days-inner">
+                      ${repeatingDaysMarkup}
+                    </div>
+                  </fieldset>` : ``}
               </div>
-            </div>
-
-            <div class="card__colors-inner">
-              <h3 class="card__colors-title">Color</h3>
-              <div class="card__colors-wrap">
-                ${colorsMarkup}
+              <div class="card__colors-inner">
+                <h3 class="card__colors-title">Color</h3>
+                <div class="card__colors-wrap">
+                  ${colorsMarkup}
+                </div>
               </div>
             </div>
           </div>
-
           <div class="card__status-btns">
             <button class="card__save" type="submit">save</button>
             <button class="card__delete" type="button">delete</button>
@@ -179,3 +122,26 @@ export const createTaskEditTemplate = (task) => {
     </article>`
   );
 };
+
+export default class TaskEdit {
+  constructor(task) {
+    this._task = task;
+    this._element = null;
+  }
+
+  getTemplate() {
+    return createTaskEditTemplate(this._task);
+  }
+
+  getElement() {
+    if (!this._element) {
+      this._element = createElement(this.getTemplate());
+    }
+
+    return this._element;
+  }
+
+  removeElement() {
+    this._element = null;
+  }
+}
